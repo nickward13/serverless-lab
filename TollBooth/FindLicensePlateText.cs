@@ -43,8 +43,8 @@ namespace TollBooth
             const string requestParameters = "language=unk&detectOrientation=true";
             // Get the API URL and the API key from settings.
             // TODO 2: Populate the below two variables with the correct AppSettings properties.
-            var uriBase = ConfigurationManager.AppSettings[""];
-            var apiKey = ConfigurationManager.AppSettings[""];
+            var uriBase = ConfigurationManager.AppSettings["computerVisionApiUrl"];
+            var apiKey = ConfigurationManager.AppSettings["computerVisionApiKey"];
 
             var resiliencyStrategy = DefineAndRetrieveResiliencyStrategy();
 
@@ -64,7 +64,7 @@ namespace TollBooth
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
                 // Execute the REST API call, implementing our resiliency strategy.
-                HttpResponseMessage response = await resiliencyStrategy.ExecuteAsync(() => _client.PostAsync(uri, content));
+                HttpResponseMessage response = await resiliencyStrategy.ExecuteAsync(() => _client.PostAsync(uri, GetImageHttpContent(imageBytes)));
 
                 // Get the JSON response.
                 var result = await response.Content.ReadAsAsync<OCRResult>();
@@ -82,6 +82,16 @@ namespace TollBooth
             _log.Info($"Finished OCR request. Result: {licensePlate}");
 
             return licensePlate;
+        }
+
+        private static ByteArrayContent GetImageHttpContent(byte[] imageBytes)
+        {
+            var content = new ByteArrayContent(imageBytes);
+
+            // Add application/octet-stream header for the content.
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+            return content;
         }
 
         /// <summary>
